@@ -1,5 +1,5 @@
 // Service worker do Smart MESA: guarda só a "moldura" (o GAS em si precisa de internet)
-const CACHE = 'smart-mesa-v1'; // Mude o número (v2, v3...) quando alterar index.html ou os ícones
+const CACHE = 'smart-mesa-2';
 const SHELL = [
   './',
   './index.html',
