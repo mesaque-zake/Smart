@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Smart MESA</title>
+  <meta name="description" content="Assistente Inteligente do Sesc Mesa Brasil">
+  <meta name="theme-color" content="#f8fafc">
+
+  <!-- Instalação (PWA) -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="MesaIcon/Favicon.png">
+  <link rel="apple-touch-icon" href="MesaIcon/Icon180.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Smart MESA">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Pré-visualização ao compartilhar (WhatsApp, Teams...) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Smart MESA">
+  <meta property="og:description" content="Assistente Inteligente do Sesc Mesa Brasil">
+  <meta property="og:image" content="https://mesaque-zake.github.io/Smart/MesaIcon/Share.png">
+  <meta property="og:url" content="https://mesaque-zake.github.io/Smart/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://mesaque-zake.github.io/Smart/MesaIcon/Share.png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Montserrat:wght@900&family=Yellowtail&display=swap" rel="stylesheet">
+
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; background: #f8fafc; overflow: hidden; font-family: 'Poppins', system-ui, sans-serif; }
+
+    /* O GAS ocupa a tela toda, respeitando entalhe e barra inferior do celular */
+    #gas {
+      position: fixed;
+      left: 0;
+      top: env(safe-area-inset-top, 0px);
+      width: 100%;
+      height: calc(100% - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      border: 0;
+      background: #f8fafc;
+    }
+
+    /* Abertura de vidro esbranquiçado por cima do GAS */
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: env(safe-area-inset-top, 0px) 1rem env(safe-area-inset-bottom, 0px);
+      background:
+        radial-gradient(circle at 20% 15%, rgba(96, 165, 250, 0.30), transparent 55%),
+        radial-gradient(circle at 85% 50%, rgba(251, 146, 60, 0.22), transparent 55%),
+        radial-gradient(circle at 25% 90%, rgba(74, 222, 128, 0.22), transparent 55%),
+        rgba(255, 255, 255, 0.62);
+      -webkit-backdrop-filter: blur(28px) saturate(1.2);
+      backdrop-filter: blur(28px) saturate(1.2);
+      transition: opacity 0.9s ease, backdrop-filter 0.9s ease, -webkit-backdrop-filter 0.9s ease;
+    }
+    #splash.saindo {
+      opacity: 0;
+      -webkit-backdrop-filter: blur(0) saturate(1);
+      backdrop-filter: blur(0) saturate(1);
+      pointer-events: none;
+    }
+
+    .splash-centro { text-align: center; animation: entrada 0.8s ease backwards; }
+    @keyframes entrada { from { opacity: 0; transform: translateY(8px); } }
+
+    /* Logo (mesmo estilo da home do app) */
+    @property --smart-c1 { syntax: '<color>'; inherits: false; initial-value: rgba(29, 78, 216, 0.85); }
+    @property --smart-c2 { syntax: '<color>'; inherits: false; initial-value: rgba(96, 165, 250, 0.60); }
+    @property --smart-sombra { syntax: '<color>'; inherits: false; initial-value: rgba(29, 78, 216, 0.30); }
+
+    .logo-smart {
+      display: block;
+      width: fit-content;
+      margin: 0 auto -0.58em;
+      padding: 0.12em 0.45em 0.18em;
+      position: relative;
+      z-index: 2;
+      font-family: 'Yellowtail', cursive;
+      font-size: clamp(4rem, 18vw, 6.5rem);
+      line-height: 1;
+      transform: rotate(-5deg);
+      --smart-c1: rgba(29, 78, 216, 0.85);
+      --smart-c2: rgba(96, 165, 250, 0.60);
+      --smart-sombra: rgba(29, 78, 216, 0.30);
+      background: linear-gradient(135deg, var(--smart-c1), var(--smart-c2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.9)) drop-shadow(0 6px 14px var(--smart-sombra));
+      animation: smartCores 12s ease-in-out infinite;
+    }
+    .logo-mesa {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900;
+      font-size: clamp(3rem, 14vw, 5rem);
+      line-height: 1;
+      letter-spacing: 0.1em;
+      padding-left: 0.1em;
+      color: #031142;
+    }
+    .subtitulo { margin: 0.9rem 0 0; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.03em; color: #94a3b8; }
+
+    @keyframes smartCores {
+      0%, 25%   { --smart-c1: rgba(29, 78, 216, 0.85); --smart-c2: rgba(96, 165, 250, 0.60); --smart-sombra: rgba(29, 78, 216, 0.30); }
+      33%, 58%  { --smart-c1: rgba(21, 128, 61, 0.85); --smart-c2: rgba(74, 222, 128, 0.60); --smart-sombra: rgba(21, 128, 61, 0.30); }
+      66%, 92%  { --smart-c1: rgba(194, 65, 12, 0.85); --smart-c2: rgba(251, 146, 60, 0.60); --smart-sombra: rgba(194, 65, 12, 0.30); }
+      100%      { --smart-c1: rgba(29, 78, 216, 0.85); --smart-c2: rgba(96, 165, 250, 0.60); --smart-sombra: rgba(29, 78, 216, 0.30); }
+    }
+
+    .powered {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(0.9rem + env(safe-area-inset-bottom, 0px));
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+
+    /* Aviso de falta de internet */
+    #offline {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: rgba(248, 250, 252, 0.92);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+      text-align: center;
+    }
+    #offline.ativo { display: flex; }
+    #offline .caixa { max-width: 22rem; color: #334155; }
+    #offline h2 { margin: 0 0 0.5rem; font-size: 1.15rem; }
+    #offline p { margin: 0 0 1.25rem; font-size: 0.9rem; color: #64748b; }
+    #offline button {
+      border: 0; border-radius: 9999px; padding: 0.8rem 1.6rem;
+      font: 600 0.95rem 'Poppins', sans-serif; color: #fff; cursor: pointer;
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      box-shadow: 0 8px 20px rgba(29, 78, 216, 0.3);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .splash-centro, .logo-smart { animation: none !important; }
+      #splash { transition: opacity 0.3s ease; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- O app (Google Apps Script). Sem o atributo "sandbox", para o GAS funcionar normalmente -->
+  <iframe id="gas" title="Smart MESA" allow="camera; fullscreen; clipboard-write"></iframe>
+
+  <!-- Abertura -->
+  <div id="splash">
+    <div class="splash-centro">
+      <div class="logo-smart">Smart</div>
+      <div class="logo-mesa">MESA</div>
+      <p class="subtitulo">Assistente Inteligente do Sesc Mesa Brasil</p>
+    </div>
+    <div class="powered">Powered with <span style="color: #e80523;">&#10084;</span> by <strong>Mesaque</strong></div>
+  </div>
+
+  <!-- Sem internet -->
+  <div id="offline">
+    <div class="caixa">
+      <h2>Sem conexão</h2>
+      <p>O Smart MESA precisa de internet para funcionar. Conecte-se e tente de novo.</p>
+      <button type="button" onclick="location.reload()">Tentar novamente</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var GAS_URL = 'https://script.google.com/macros/s/AKfycbwa11kfw47DP6pboI3EkS9HE2XE7CsOPhlMYKOGlYBXH6srQlHEqMTXrRN2zTAejqbksg/exec';
+      var MIN_MS = 2000; // A abertura dura pelo menos 2 s
+      var MAX_MS = 5000; // E no máximo 5 s, mesmo que o GAS demore
+
+      var frame = document.getElementById('gas');
+      var splash = document.getElementById('splash');
+      var offline = document.getElementById('offline');
+      var inicio = Date.now();
+      var revelado = false;
+
+      function revelar() {
+        if (revelado) return;
+        revelado = true;
+        splash.classList.add('saindo');
+        setTimeout(function () { splash.style.display = 'none'; }, 1000);
+      }
+
+      // Sem internet: não adianta carregar o GAS
+      if (!navigator.onLine) {
+        revelar();
+        offline.classList.add('ativo');
+      } else {
+        frame.addEventListener('load', function () {
+          setTimeout(revelar, Math.max(0, MIN_MS - (Date.now() - inicio)));
+        });
+        setTimeout(revelar, MAX_MS);
+        frame.src = GAS_URL;
+      }
+
+      window.addEventListener('online', function () {
+        if (offline.classList.contains('ativo')) location.reload();
+      });
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('SW:', e); });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
